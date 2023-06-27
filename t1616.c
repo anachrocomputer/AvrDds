@@ -3,6 +3,7 @@
 #define F_CPU (20000000)
 
 #include <stdio.h>
+#include <math.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
@@ -55,6 +56,9 @@ struct UART_BUFFER U0Buf;
 uint8_t SavedRSTFR = 0;
 volatile uint32_t Milliseconds = 0UL;
 volatile uint8_t Tick = 0;
+volatile uint16_t PhaseAcc = 0u;
+volatile uint16_t PhaseInc = 512u;
+volatile uint8_t Wave[256];
 
 
 /* USART0_RXC_vect --- ISR for USART0 Receive Complete, used for Rx */
@@ -100,9 +104,26 @@ ISR(USART0_DRE_vect)
 ISR(TCB0_INT_vect)
 {
    TCB0.INTFLAGS = TCB_CAPT_bm;
+   
    Milliseconds++;
    Tick = 1;
    PORTA.OUTTGL = SQWAVE;     // DEBUG: 500Hz on PA4 pin
+}
+
+
+/* TCB1_OVF_vect --- ISR for Timer/Counter 1 overflow, used for 20kHz samples */
+
+ISR(TCB1_INT_vect)
+{
+   PORTA.OUTSET = LED;        // LED on PA1 ON
+   
+   TCB1.INTFLAGS = TCB_CAPT_bm;
+   
+   PhaseAcc += PhaseInc;
+   
+   DAC0.DATA = Wave[PhaseAcc >> 8u];
+   
+   PORTA.OUTCLR = LED;        // LED on PA1 OFF
 }
 
 
@@ -388,6 +409,20 @@ static void initMillisecondTimer(void)
 }
 
 
+/* initSampleTimer --- set up a timer to interrupt at 20kHz */
+
+static void initSampleTimer(void)
+{
+   // Set up TCB1 for regular 20kHz interrupt
+   TCB1.CTRLA = TCB_CLKSEL_CLKDIV2_gc;
+   TCB1.CTRLB = TCB_CNTMODE_INT_gc;
+   TCB1.CCMP = 499;              // 500 counts gives 50us or 20kHz
+   TCB1.CNT = 0;
+   TCB1.INTCTRL = TCB_CAPT_bm;   // Enable interrupts
+   TCB1.CTRLA |= TCB_ENABLE_bm;  // Enable timer
+}
+
+
 /* initDAC --- set up the 8-bit DAC and connect it to the output pin */
 
 static void initDAC(void)
@@ -401,17 +436,24 @@ int main(void)
 {
    int ledState = 0;
    uint8_t fade = 0;
-   uint16_t dac = 0;
    uint32_t end;
+   int i;
+   const double delta = (2.0 * M_PI) / 256.0;
    
    initMCU();
    initGPIOs();
    initUARTs();
    initPWM();
    initMillisecondTimer();
+   initSampleTimer();
    initDAC();
    
    sei();   // Enable interrupts
+   
+   for (i = 0; i < 256; i++) {
+      const double theta = delta * (double)i;
+      Wave[i] = (sin(theta) * 127) + 128;
+   }
    
    printf("\nHello from the %s\n", "ATtiny1616");
    printResetReason();
@@ -434,14 +476,11 @@ int main(void)
          else
             fade++;
             
-         dac += 8;
-         
-         DAC0.DATA = dac >> 8;
          setRGBLed(ledState, fade);
 
          if (millis() >= end) {
             end = millis() + 500UL;
-            PORTA.OUTTGL = LED;        // LED on PA1 toggle
+            //PORTA.OUTTGL = LED;        // LED on PA1 toggle
             printf("millis() = %ld\n", millis());
          }
          
@@ -469,7 +508,50 @@ int main(void)
          case 'R':
             printResetReason();
             break;
+         case 'w':   // Sawtooth
+         case 'W':
+            for (i = 0; i < 256; i++)
+               Wave[i] = i;
+            break;
+         case 's':   // Sine
+         case 'S':
+            for (i = 0; i < 256; i++) {
+               const double theta = delta * (double)i;
+               Wave[i] = (sin(theta) * 127) + 128;
+            }
+            break;
+         case 't':   // Triangle
+         case 'T':
+            for (i = 0; i < 256; i++) {
+               if (i < 128)
+                  Wave[i] = i * 2;
+               else
+                  Wave[i] = (255 - i) * 2;
+            }
+            break;
+         case 'q':   // Square
+         case 'Q':
+            for (i = 0; i < 256; i++) {
+               if (i < 128)
+                  Wave[i] = 0;
+               else
+                  Wave[i] = 255;
+            }
+            break;
+         case '2':
+            PhaseInc = (220L * 65536L) / 20000L;
+            printf("PhaseInc = %d\n", PhaseInc);
+            break;
+         case '4':
+            PhaseInc = (440L * 65536L) / 20000L;
+            printf("PhaseInc = %d\n", PhaseInc);
+            break;
+         case '8':
+            PhaseInc = (880L * 65536L) / 20000L;
+            printf("PhaseInc = %d\n", PhaseInc);
+            break;
          }
       }
    }
 }
+
