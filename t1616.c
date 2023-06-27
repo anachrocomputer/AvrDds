@@ -206,55 +206,37 @@ int UART0RxAvailable(void)
 }
 
 
-/* setRGBLed --- control two RGB LEDs connected to PORT B */
+/* setRGBLed --- control RGB LED connected to PORT B */
 
-void setRGBLed(const int state, const uint8_t fade)
+void setRGBLed(const int state)
 {
    switch (state) {
-   case 0:                    // Red fading up, blue on
-      TCA0.SINGLE.CMP0 = fade;
-      TCA0.SINGLE.CMP1 = 0;
-      TCA0.SINGLE.CMP2 = 255;
+   case 0:
       PORTB.OUTSET = LED_R;
       PORTB.OUTCLR = LED_G;
       PORTB.OUTCLR = LED_B;
       break;
-   case 1:                    // Red on, blue fading down
-      TCA0.SINGLE.CMP0 = 255;
-      TCA0.SINGLE.CMP1 = 0;
-      TCA0.SINGLE.CMP2 = 255 - fade;
+   case 1:
       PORTB.OUTSET = LED_R;
       PORTB.OUTSET = LED_G;
       PORTB.OUTCLR = LED_B;
       break;
-   case 2:                    // Red on, green fading up
-      TCA0.SINGLE.CMP0 = 255;
-      TCA0.SINGLE.CMP1 = fade;
-      TCA0.SINGLE.CMP2 = 0;
+   case 2:
       PORTB.OUTCLR = LED_R;
       PORTB.OUTSET = LED_G;
       PORTB.OUTCLR = LED_B;
       break;
-   case 3:                    // Red fading down, green on
-      TCA0.SINGLE.CMP0 = 255 - fade;
-      TCA0.SINGLE.CMP1 = 255;
-      TCA0.SINGLE.CMP2 = 0;
+   case 3:
       PORTB.OUTCLR = LED_R;
       PORTB.OUTSET = LED_G;
       PORTB.OUTSET = LED_B;
       break;
-   case 4:                    // Green on, blue fading up
-      TCA0.SINGLE.CMP0 = 0;
-      TCA0.SINGLE.CMP1 = 255;
-      TCA0.SINGLE.CMP2 = fade;
+   case 4:
       PORTB.OUTCLR = LED_R;
       PORTB.OUTCLR = LED_G;
       PORTB.OUTSET = LED_B;
       break;
-   case 5:                    // Green fading down, blue on
-      TCA0.SINGLE.CMP0 = 0;
-      TCA0.SINGLE.CMP1 = 255 - fade;
-      TCA0.SINGLE.CMP2 = 255;
+   case 5:
       PORTB.OUTSET = LED_R;
       PORTB.OUTCLR = LED_G;
       PORTB.OUTSET = LED_B;
@@ -375,26 +357,6 @@ static void initUARTs(void)
 }
 
 
-/* initPWM --- set up PWM channels */
-
-static void initPWM(void)
-{
-   // Set up TCA0 for three PWM outputs
-   TCA0.SINGLE.PER = 255;
-   TCA0.SINGLE.CTRLA = TCA_SINGLE_CLKSEL_DIV64_gc;
-   TCA0.SINGLE.CTRLB = TCA_SINGLE_WGMODE_SINGLESLOPE_gc | TCA_SINGLE_CMP0EN_bm | TCA_SINGLE_CMP1EN_bm | TCA_SINGLE_CMP2EN_bm;
-   TCA0.SINGLE.CTRLC = 0;
-   TCA0.SINGLE.CTRLD = 0;
-   TCA0.SINGLE.CMP0 = 0;   // Red PWM
-   TCA0.SINGLE.CMP1 = 0;   // Green PWM
-   TCA0.SINGLE.CMP2 = 0;   // Blue PWM
-   TCA0.SINGLE.CTRLA |= TCA_SINGLE_ENABLE_bm;
-
-   // Enable output on PWM pins
-   PORTB.DIRSET = PIN0_bm | PIN1_bm | PIN2_bm;
-}
-
-
 /* initMillisecondTimer --- set up a timer to interrupt every millisecond */
 
 static void initMillisecondTimer(void)
@@ -443,7 +405,6 @@ int main(void)
    initMCU();
    initGPIOs();
    initUARTs();
-   initPWM();
    initMillisecondTimer();
    initSampleTimer();
    initDAC();
@@ -476,7 +437,7 @@ int main(void)
          else
             fade++;
             
-         setRGBLed(ledState, fade);
+         setRGBLed(ledState);
 
          if (millis() >= end) {
             end = millis() + 500UL;
