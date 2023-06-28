@@ -314,9 +314,6 @@ static void initGPIOs(void)
 
 static void initUARTs(void)
 {
-   // Switch UART pins to the alternate locations to avoid clash with PWM pins
-   PORTMUX.CTRLB = PORTMUX_USART0_ALTERNATE_gc;
-
    // Set up UART0 and associated circular buffers
    U0Buf.tx.head = 0;
    U0Buf.tx.tail = 0;
@@ -329,8 +326,8 @@ static void initUARTs(void)
    USART0.CTRLA |= USART_RXCIE_bm;   // Enable UART0 Rx interrupt
    USART0.CTRLB = USART_RXEN_bm | USART_TXEN_bm | USART_RXMODE_NORMAL_gc;
    
-   // Enable UART0 TxD pin
-   PORTA.DIRSET = PIN1_bm;
+   // Enable UART0 TxD pin, PB2 (pin 9 on SOIC-20)
+   PORTB.DIRSET = PIN2_bm;
 
    stdout = &USART_stream;    // Allow use of 'printf' and similar functions
 }
