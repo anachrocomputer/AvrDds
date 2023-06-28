@@ -9,8 +9,10 @@
 
 // UART TxD on PA1 (alternate)
 // UART RxD on PA2 (alternate)
-#define LED    PIN3_bm  // Blinking LED on PA3
-#define SQWAVE PIN4_bm  // 500Hz square wave on PA4
+#define LED     PIN3_bm  // Blinking LED on PA3 (pin 19 on SOIC-20)
+#define SYNC    PIN0_bm  // Sync on PC0 (pin 12 on SOIC-20)
+#define SQWAVE  PIN1_bm  // 500Hz square wave on PC1 (pin 13 on SOIC-20)
+#define DDSTIME PIN2_bm  // DDS ISR timing on PC2 (pin 14 on SOIC-20)
 
 #define LED_R PIN3_bm   // Red LED on PB3
 #define LED_G PIN4_bm   // Green LED on PB4
@@ -107,7 +109,7 @@ ISR(TCB0_INT_vect)
    
    Milliseconds++;
    Tick = 1;
-   PORTA.OUTTGL = SQWAVE;     // DEBUG: 500Hz on PA4 pin
+   PORTC.OUTTGL = SQWAVE;     // DEBUG: 500Hz on PC1 pin
 }
 
 
@@ -115,7 +117,7 @@ ISR(TCB0_INT_vect)
 
 ISR(TCB1_INT_vect)
 {
-   PORTA.OUTSET = LED;        // LED on PA1 ON
+   PORTC.OUTSET = DDSTIME;        // PC2 HIGH
    
    TCB1.INTFLAGS = TCB_CAPT_bm;
    
@@ -123,7 +125,13 @@ ISR(TCB1_INT_vect)
    
    DAC0.DATA = Wave[PhaseAcc >> 8u];
    
-   PORTA.OUTCLR = LED;        // LED on PA1 OFF
+   // Square wave on PC0 for scope sync
+   if (PhaseAcc & 0x8000)
+      PORTC.OUTSET = SYNC;
+   else
+      PORTC.OUTCLR = SYNC;
+   
+   PORTC.OUTCLR = DDSTIME;        // PC2 LOW
 }
 
 
@@ -335,9 +343,9 @@ static void initMCU(void)
 
 static void initGPIOs(void)
 {
-   PORTA.DIR = LED | SQWAVE;
+   PORTA.DIR = LED;
    PORTB.DIR = LED_R | LED_G | LED_B;
-   PORTC.DIR = 0;
+   PORTC.DIR = SYNC | SQWAVE | DDSTIME;
 
    PORTA.OUT = 0xFF;
    PORTB.OUT = 0xFF;
@@ -478,7 +486,7 @@ int main(void)
          
          if (millis() >= end) {
             end = millis() + 500UL;
-            //PORTA.OUTTGL = LED;        // LED on PA1 toggle
+            PORTA.OUTTGL = LED;        // LED on PA3 toggle
             printf("millis() = %ld %d\n", millis(), adc4);
          }
          
