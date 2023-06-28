@@ -14,10 +14,6 @@
 #define SQWAVE  PIN1_bm  // 500Hz square wave on PC1 (pin 13 on SOIC-20)
 #define DDSTIME PIN2_bm  // DDS ISR timing on PC2 (pin 14 on SOIC-20)
 
-#define LED_R PIN3_bm   // Red LED on PB3
-#define LED_G PIN4_bm   // Green LED on PB4
-#define LED_B PIN5_bm   // Blue LED on PB5
-
 #define BAUDRATE (9600UL)
 
 #define UART_RX_BUFFER_SIZE  (128)
@@ -214,45 +210,6 @@ int UART0RxAvailable(void)
 }
 
 
-/* setRGBLed --- control RGB LED connected to PORT B */
-
-void setRGBLed(const int state)
-{
-   switch (state) {
-   case 0:
-      PORTB.OUTSET = LED_R;
-      PORTB.OUTCLR = LED_G;
-      PORTB.OUTCLR = LED_B;
-      break;
-   case 1:
-      PORTB.OUTSET = LED_R;
-      PORTB.OUTSET = LED_G;
-      PORTB.OUTCLR = LED_B;
-      break;
-   case 2:
-      PORTB.OUTCLR = LED_R;
-      PORTB.OUTSET = LED_G;
-      PORTB.OUTCLR = LED_B;
-      break;
-   case 3:
-      PORTB.OUTCLR = LED_R;
-      PORTB.OUTSET = LED_G;
-      PORTB.OUTSET = LED_B;
-      break;
-   case 4:
-      PORTB.OUTCLR = LED_R;
-      PORTB.OUTCLR = LED_G;
-      PORTB.OUTSET = LED_B;
-      break;
-   case 5:
-      PORTB.OUTSET = LED_R;
-      PORTB.OUTCLR = LED_G;
-      PORTB.OUTSET = LED_B;
-      break;
-   }
-}
-
-
 /* analogRead --- read a single sample from the given ADC channel */
 
 uint16_t analogRead(const int channel)
@@ -344,7 +301,7 @@ static void initMCU(void)
 static void initGPIOs(void)
 {
    PORTA.DIR = LED;
-   PORTB.DIR = LED_R | LED_G | LED_B;
+   PORTB.DIR = 0;
    PORTC.DIR = SYNC | SQWAVE | DDSTIME;
 
    PORTA.OUT = 0xFF;
@@ -436,8 +393,6 @@ static void initADC(void)
 
 int main(void)
 {
-   int ledState = 0;
-   uint8_t fade = 0;
    uint32_t end;
    uint16_t adc4 = 0u;
    int i;
@@ -468,19 +423,6 @@ int main(void)
    
    while (1) {
       if (Tick) {
-         if (fade == 255) {
-            fade = 0;
-
-            if (ledState == 5)
-               ledState = 0;
-            else
-               ledState++;
-         }
-         else
-            fade++;
-            
-         setRGBLed(ledState);
-
          adc4 = analogRead(4);   // AIN4, pin 2 on the SOIC-20
          PhaseInc = ((adc4 + 20L) * 65536L) / 20000L;
          
