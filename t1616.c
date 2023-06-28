@@ -245,6 +245,20 @@ void setRGBLed(const int state)
 }
 
 
+/* analogRead --- read a single sample from the given ADC channel */
+
+uint16_t analogRead(const int channel)
+{
+   ADC0.MUXPOS = channel;
+   ADC0.COMMAND = ADC_STCONV_bm;
+   
+   while (ADC0.COMMAND & ADC_STCONV_bm)
+      ;
+   
+   return (ADC0.RES);
+}
+
+
 /* printDeviceID --- print the Device ID bytes as read from SIGROW */
 
 void printDeviceID(void)
@@ -394,11 +408,30 @@ static void initDAC(void)
 }
 
 
+/* initADC --- set up the 10-bit analog-to-digital converter */
+
+static void initADC(void)
+{
+   ADC0.CTRLA = 0;               // Disable ADC, 10-bit resolution, not free-running
+   ADC0.CTRLB = 0;               // Single sample, no accumulation
+   ADC0.CTRLC = ADC_SAMPCAP_bm | ADC_REFSEL0_bm | ADC_PRESC1_bm;
+   ADC0.CTRLD = ADC_INITDLY1_bm;
+   ADC0.CTRLE = 0;
+   ADC0.SAMPCTRL = 4;
+   ADC0.CALIB = 0;
+   ADC0.MUXPOS = 0;
+   ADC0.CTRLA |= ADC_ENABLE_bm;  // Enable ADC
+   
+   PORTA.DIRCLR = PIN4_bm;    // Make sure PA4/AIN4 (pin 2 on SOIC-20) is an input
+}
+
+
 int main(void)
 {
    int ledState = 0;
    uint8_t fade = 0;
    uint32_t end;
+   uint16_t adc4 = 0u;
    int i;
    const double delta = (2.0 * M_PI) / 256.0;
    
@@ -408,6 +441,7 @@ int main(void)
    initMillisecondTimer();
    initSampleTimer();
    initDAC();
+   initADC();
    
    sei();   // Enable interrupts
    
@@ -439,10 +473,13 @@ int main(void)
             
          setRGBLed(ledState);
 
+         adc4 = analogRead(4);   // AIN4, pin 2 on the SOIC-20
+         PhaseInc = ((adc4 + 20L) * 65536L) / 20000L;
+         
          if (millis() >= end) {
             end = millis() + 500UL;
             //PORTA.OUTTGL = LED;        // LED on PA1 toggle
-            printf("millis() = %ld\n", millis());
+            printf("millis() = %ld %d\n", millis(), adc4);
          }
          
          Tick = 0;
