@@ -147,17 +147,6 @@ uint32_t millis(void)
 }
 
 
-/* t1ou --- transmit one character to the UART by polling */
-
-void t1ou(const int ch)
-{
-   while ((USART0.STATUS & USART_DREIF_bm) == 0)
-      ;
-      
-   USART0.TXDATAL = ch;
-}
-
-
 /* UART0RxByte --- read one character from the UART via the circular buffer */
 
 uint8_t UART0RxByte(void)
@@ -267,19 +256,6 @@ void printFuses(void)
 void printResetReason(void)
 {
    printf("RSTCTRL.RSTFR = 0x%02x\n", SavedRSTFR);
-}
-
-
-int getTemp(void)
-{
-   int8_t sigrow_offset = SIGROW.TEMPSENSE1;  // Read signed value from signature row
-   uint8_t sigrow_gain = SIGROW.TEMPSENSE0;    // Read unsigned value from signature row
-   
-   uint16_t adc_reading = 0;   // ADC conversion result with 1.1 V internal reference 
-   uint32_t temp = adc_reading - sigrow_offset;temp *= sigrow_gain;  // Result might overflow 16 bit variable (10bit+8bit)
-   temp += 0x80;               // Add 1/2 to get correct rounding on division below
-   temp >>= 8;                 // Divide result to get Kelvin 
-   uint16_t temperature_in_K = temp;
 }
 
 
