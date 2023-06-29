@@ -384,6 +384,7 @@ static void initADC(void)
    ADC0.MUXPOS = 0;
    ADC0.CTRLA |= ADC_ENABLE_bm;  // Enable ADC
    
+   PORTA.DIRCLR = PIN1_bm;    // Make sure PA1/AIN1 (pin 17 on SOIC-20) is an input
    PORTA.DIRCLR = PIN4_bm;    // Make sure PA4/AIN4 (pin 2 on SOIC-20) is an input
 }
 
@@ -391,7 +392,9 @@ static void initADC(void)
 int main(void)
 {
    uint32_t end;
+   uint16_t adc1 = 0u;
    uint16_t adc4 = 0u;
+   uint8_t state = 0u;
    int i;
    const double delta = (2.0 * M_PI) / 256.0;
    
@@ -420,13 +423,25 @@ int main(void)
    
    while (1) {
       if (Tick) {
-         adc4 = analogRead(4);   // AIN4, pin 2 on the SOIC-20
-         PhaseInc = ((adc4 + 20L) * 65536L) / 20000L;
+         switch (state) {
+         case 0:
+            adc1 = analogRead(1);   // AIN1, pin 17 on the SOIC-20
+            state++;
+            break;
+         case 1:
+            adc4 = analogRead(4);   // AIN4, pin 2 on the SOIC-20
+            state++;
+            break;
+         case 2:
+            PhaseInc = ((adc1 + 20L) * 65536L) / 20000L;
+            state = 0;
+            break;
+         }
          
          if (millis() >= end) {
             end = millis() + 500UL;
             PORTC.OUTTGL = LED;        // LED on PC3 toggle
-            printf("millis() = %ld %d\n", millis(), adc4);
+            printf("millis() = %ld %d %d\n", millis(), adc1, adc4);
          }
          
          Tick = 0;
