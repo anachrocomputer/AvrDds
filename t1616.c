@@ -9,10 +9,10 @@
 
 // UART TxD on PA1 (alternate)
 // UART RxD on PA2 (alternate)
-#define LED     PIN3_bm  // Blinking LED on PA3 (pin 19 on SOIC-20)
 #define SYNC    PIN0_bm  // Sync on PC0 (pin 12 on SOIC-20)
 #define SQWAVE  PIN1_bm  // 500Hz square wave on PC1 (pin 13 on SOIC-20)
 #define DDSTIME PIN2_bm  // DDS ISR timing on PC2 (pin 14 on SOIC-20)
+#define LED     PIN3_bm  // Blinking LED on PC3 (pin 15 on SOIC-20)
 
 #define BAUDRATE (9600UL)
 
@@ -300,9 +300,9 @@ static void initMCU(void)
 
 static void initGPIOs(void)
 {
-   PORTA.DIR = LED;
+   PORTA.DIR = 0;
    PORTB.DIR = 0;
-   PORTC.DIR = SYNC | SQWAVE | DDSTIME;
+   PORTC.DIR = SYNC | SQWAVE | DDSTIME | LED;
 
    PORTA.OUT = 0xFF;
    PORTB.OUT = 0xFF;
@@ -425,7 +425,7 @@ int main(void)
          
          if (millis() >= end) {
             end = millis() + 500UL;
-            PORTA.OUTTGL = LED;        // LED on PA3 toggle
+            PORTC.OUTTGL = LED;        // LED on PC3 toggle
             printf("millis() = %ld %d\n", millis(), adc4);
          }
          
