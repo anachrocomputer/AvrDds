@@ -57,6 +57,8 @@ volatile uint8_t Tick = 0;
 volatile uint16_t PhaseAcc = 0u;
 volatile uint16_t PhaseInc = 512u;
 volatile uint8_t Wave[256];
+uint16_t IncTab[128];
+const char NoteNames[12][3] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
 
 /* USART0_RXC_vect --- ISR for USART0 Receive Complete, used for Rx */
@@ -395,6 +397,10 @@ int main(void)
    uint16_t adc1 = 0u;
    uint16_t adc4 = 0u;
    uint8_t state = 0u;
+   uint8_t midi = 0u;
+   uint8_t note = 0u;
+   uint8_t octave = 0u;
+   const char *name;
    int i;
    const double delta = (2.0 * M_PI) / 256.0;
    
@@ -408,16 +414,24 @@ int main(void)
    
    sei();   // Enable interrupts
    
-   for (i = 0; i < 256; i++) {
-      const double theta = delta * (double)i;
-      Wave[i] = (sin(theta) * 127) + 128;
-   }
-   
    printf("\nHello from the %s\n", "ATtiny1616");
    printResetReason();
    printFuses();
    printDeviceID();
    printSerialNumber();
+   
+   // Generate sinewave
+   for (i = 0; i < 256; i++) {
+      const double theta = delta * (double)i;
+      Wave[i] = (sin(theta) * 127) + 128;
+   }
+   
+   // Generate table of phase increments
+   for (i = 0; i < 128; i++) {
+      const double frequency = 440.0 * pow(2.0, (double)(i - 69) / 12.0);
+      
+      IncTab[i] = ((frequency * 65536.0) / 20000.0) + 0.5;
+   }
    
    end = millis() + 500UL;
    
@@ -433,7 +447,14 @@ int main(void)
             state++;
             break;
          case 2:
-            PhaseInc = ((adc1 + 20L) * 65536L) / 20000L;
+            midi = adc1 / 8;
+            octave = (midi / 12) - 1;
+            note = midi % 12;
+            name = NoteNames[note];
+            state++;
+            break;
+         case 3:
+            PhaseInc = IncTab[midi];
             state = 0;
             break;
          }
@@ -441,7 +462,7 @@ int main(void)
          if (millis() >= end) {
             end = millis() + 500UL;
             PORTC.OUTTGL = LED;        // LED on PC3 toggle
-            printf("millis() = %ld %d %d\n", millis(), adc1, adc4);
+            printf("millis() = %ld %d %d %s%d\n", millis(), adc4, midi, name, octave);
          }
          
          Tick = 0;
