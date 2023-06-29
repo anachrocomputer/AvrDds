@@ -111,7 +111,7 @@ ISR(TCB0_INT_vect)
 }
 
 
-/* TCB1_OVF_vect --- ISR for Timer/Counter 1 overflow, used for 20kHz samples */
+/* TCB1_OVF_vect --- ISR for Timer/Counter 1 overflow, used for 40kHz samples */
 
 ISR(TCB1_INT_vect)
 {
@@ -349,14 +349,14 @@ static void initMillisecondTimer(void)
 }
 
 
-/* initSampleTimer --- set up a timer to interrupt at 20kHz */
+/* initSampleTimer --- set up a timer to interrupt at 40kHz */
 
 static void initSampleTimer(void)
 {
-   // Set up TCB1 for regular 20kHz interrupt
+   // Set up TCB1 for regular 40kHz interrupt
    TCB1.CTRLA = TCB_CLKSEL_CLKDIV2_gc;
    TCB1.CTRLB = TCB_CNTMODE_INT_gc;
-   TCB1.CCMP = 499;              // 500 counts gives 50us or 20kHz
+   TCB1.CCMP = 249;              // 250 counts gives 25us or 40kHz
    TCB1.CNT = 0;
    TCB1.INTCTRL = TCB_CAPT_bm;   // Enable interrupts
    TCB1.CTRLA |= TCB_ENABLE_bm;  // Enable timer
@@ -430,7 +430,7 @@ int main(void)
    for (i = 0; i < 128; i++) {
       const double frequency = 440.0 * pow(2.0, (double)(i - 69) / 12.0);
       
-      IncTab[i] = ((frequency * 65536.0) / 20000.0) + 0.5;
+      IncTab[i] = ((frequency * 65536.0) / 40000.0) + 0.5;
    }
    
    end = millis() + 500UL;
@@ -518,18 +518,6 @@ int main(void)
                else
                   Wave[i] = 255;
             }
-            break;
-         case '2':
-            PhaseInc = (220L * 65536L) / 20000L;
-            printf("PhaseInc = %d\n", PhaseInc);
-            break;
-         case '4':
-            PhaseInc = (440L * 65536L) / 20000L;
-            printf("PhaseInc = %d\n", PhaseInc);
-            break;
-         case '8':
-            PhaseInc = (880L * 65536L) / 20000L;
-            printf("PhaseInc = %d\n", PhaseInc);
             break;
          }
       }
