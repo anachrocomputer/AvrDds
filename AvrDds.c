@@ -1,4 +1,4 @@
-/* t1616 --- test code for ATtiny1616 and other 1-series chips 2023-06-11 */
+/* AvrDds --- Direct Digital Synthesis on AVR chips         2023-06-11 */
 
 #define F_CPU (20000000)
 
@@ -7,8 +7,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-// UART TxD on PA1 (alternate)
-// UART RxD on PA2 (alternate)
+// UART TxD on PB2
+// UART RxD on PB3
 #define SYNC    PIN0_bm  // Sync on PC0 (pin 12 on SOIC-20)
 #define SQWAVE  PIN1_bm  // 500Hz square wave on PC1 (pin 13 on SOIC-20)
 #define DDSTIME PIN2_bm  // DDS ISR timing on PC2 (pin 14 on SOIC-20)
