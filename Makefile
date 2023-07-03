@@ -32,33 +32,33 @@ TPIDEV=usbasp
 UPDIPORT=/dev/ttyUSB0
 UPDIDEV=jtag2updi
 
-OBJS=t1616.o t4809.o
+OBJS=AvrDds1616.o AvrDds4809.o
 ELFS=$(OBJS:.o=.elf)
 
 # Default target will compile and link all C sources, but not program anything
 all: $(ELFS)
 .PHONY: all
 
-t1616.elf: t1616.o
-	$(LD) -mmcu=$(MCU1616) $(LDFLAGS) t1616.o
-	$(SZ) --mcu=$(MCU1616) $(SZFLAGS) t1616.elf
+AvrDds1616.elf: AvrDds1616.o
+	$(LD) -mmcu=$(MCU1616) $(LDFLAGS) AvrDds1616.o
+	$(SZ) --mcu=$(MCU1616) $(SZFLAGS) AvrDds1616.elf
 
-t1616.o: t1616.c
-	$(CC) -mmcu=$(MCU1616) $(CFLAGS) t1616.c
+AvrDds1616.o: AvrDds.c
+	$(CC) -mmcu=$(MCU1616) $(CFLAGS) AvrDds.c
 
-t4809.elf: t4809.o
-	$(LD) -mmcu=$(MCU4809) $(LDFLAGS) t4809.o
-	$(SZ) --mcu=$(MCU4809) $(SZFLAGS) t4809.elf
+AvrDds4809.elf: AvrDds4809.o
+	$(LD) -mmcu=$(MCU4809) $(LDFLAGS) AvrDds4809.o
+	$(SZ) --mcu=$(MCU4809) $(SZFLAGS) AvrDds4809.elf
 
-t4809.o: t1616.c
-	$(CC) -mmcu=$(MCU4809) $(CFLAGS) t1616.c
+AvrDds4809.o: AvrDds.c
+	$(CC) -mmcu=$(MCU4809) $(CFLAGS) AvrDds.c
 
 # Targets to invoke the programmer and program the flash memory of the MCU
-prog1616: t1616.elf
-	$(DUDE) $(DUDEFLAGS) -c $(UPDIDEV) -P $(UPDIPORT) -p $(MCU1616) -e -U flash:w:t1616.elf:e
+prog1616: AvrDds1616.elf
+	$(DUDE) $(DUDEFLAGS) -c $(UPDIDEV) -P $(UPDIPORT) -p $(MCU1616) -e -U flash:w:AvrDds1616.elf:e
 
-prog4809: t4809.elf
-	$(DUDE) $(DUDEFLAGS) -c $(UPDIDEV) -P $(UPDIPORT) -p $(MCU4809) -e -U flash:w:t4809.elf:e
+prog4809: AvrDds4809.elf
+	$(DUDE) $(DUDEFLAGS) -c $(UPDIDEV) -P $(UPDIPORT) -p $(MCU4809) -e -U flash:w:AvrDds4809.elf:e
 
 .PHONY: prog1616 prog4809
 
