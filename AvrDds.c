@@ -478,6 +478,9 @@ int main(void)
          case 'R':
             printResetReason();
             break;
+         case '~':
+            _PROTECTED_WRITE(RSTCTRL.SWRR, RSTCTRL_SWRE_bm);
+            break;
          case 'w':   // Sawtooth
          case 'W':
             for (i = 0; i < 256; i++)

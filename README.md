@@ -70,7 +70,8 @@ surface-mount versions can use all four UARTs).
 
 On the ATtiny1616 and ATmega4809,
 serial input is accepted on UART0.
-All the chips accept a letter 'r' to print the reset reason.
+All the chips accept a letter 'r' to print the reset reason and
+'~' to invoke a software reset.
 The ATtiny1616 and ATmega4809 also accept 'i' to print the chip ID
 bytes, 'n' to print the unique serial number and 'f' to print the
 values of the fuse registers.
