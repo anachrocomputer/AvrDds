@@ -88,6 +88,6 @@ This may change to become voltage-controlled in a future version.
 * Add more control voltage (CV) analog inputs
 * Test with other AVR chips (e.g. other 1-series ATtiny chips)
 * Test with 48-pin SMD ATmega4809
-* Add support for 2-series AVRs (e.g. ATtiny1626)
+* Add support for 2-series AVRs (e.g. ATtiny1626): two UARTs, 12-bit ADC, no DAC
 * Configure and test the watchdog timer
 

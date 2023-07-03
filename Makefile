@@ -50,8 +50,8 @@ t4809.elf: t4809.o
 	$(LD) -mmcu=$(MCU4809) $(LDFLAGS) t4809.o
 	$(SZ) --mcu=$(MCU4809) $(SZFLAGS) t4809.elf
 
-t4809.o: t4809.c
-	$(CC) -mmcu=$(MCU4809) $(CFLAGS) t4809.c
+t4809.o: t1616.c
+	$(CC) -mmcu=$(MCU4809) $(CFLAGS) t1616.c
 
 # Targets to invoke the programmer and program the flash memory of the MCU
 prog1616: t1616.elf

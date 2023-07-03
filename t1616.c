@@ -121,7 +121,9 @@ ISR(TCB1_INT_vect)
    
    PhaseAcc += PhaseInc;
    
+#ifdef DAC0
    DAC0.DATA = Wave[PhaseAcc >> 8u];
+#endif
    
    // Square wave on PC0 for scope sync
    if (PhaseAcc & 0x8000)
@@ -243,7 +245,9 @@ void printFuses(void)
    printf("FUSES.WDTCFG = 0x%02x\n", FUSE.WDTCFG);
    printf("FUSES.BODCFG = 0x%02x\n", FUSE.BODCFG);
    printf("FUSES.OSCCFG = 0x%02x\n", FUSE.OSCCFG);
+#ifdef TCD0
    printf("FUSES.TCD0CFG = 0x%02x\n", FUSE.TCD0CFG);
+#endif
    printf("FUSES.SYSCFG0 = 0x%02x\n", FUSE.SYSCFG0);
    printf("FUSES.SYSCFG1 = 0x%02x\n", FUSE.SYSCFG1);
    printf("FUSES.APPEND = 0x%02x\n", FUSE.APPEND);
@@ -343,8 +347,10 @@ static void initSampleTimer(void)
 
 static void initDAC(void)
 {
+#ifdef DAC0
    DAC0.CTRLA = DAC_ENABLE_bm | DAC_OUTEN_bm; // Enable DAC and pin (PA6, pin 4 of SOIC-20)
    VREF.CTRLA = VREF_DAC0REFSEL_2V5_gc;       // Set VREF for DAC to 2.5V
+#endif
 }
 
 
@@ -390,7 +396,14 @@ int main(void)
    
    sei();   // Enable interrupts
    
+// __AVR_DEVICE_NAME__
+#ifdef __AVR_ATtiny1616__
    printf("\nHello from the %s\n", "ATtiny1616");
+#endif
+#ifdef __AVR_ATmega4809__
+   printf("\nHello from the %s\n", "ATmega4809");
+#endif
+
    printResetReason();
    printFuses();
    printDeviceID();
