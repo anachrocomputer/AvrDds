@@ -16,6 +16,31 @@ for those chips that I can use for testing.
 Also, the ATtiny1616 has a built-in 8-bit DAC whereas the ATmega4809 must
 be connected to an external SPI DAC (MCP4822).
 
+## Connections
+
+| Signal  | MCU Port | ATtiny1616 SOIC-20 pin | ATmega4809 DIP-40 pin | MCP4822 DIP-8 pin |
+|---------|----------|------------------------|-----------------------|-------------------|
+| UPDI    | UPDI     | 16 (PA0)               | 30                    |                   |
+| SYNC    | PC0      | 12                     | 1                     |                   |
+| SQWAVE  | PC1      | 13                     | 2                     |                   |
+| DDSTIME | PC2      | 14                     | 3                     |                   |
+| LED     | PC3      | 15                     | 4                     |                   |
+| DAC     | PA6/OUT  | 4                      | n/a                   |                   |
+| CV_IN   | AIN1     | 17 (PA1/AIN1)          | 10 (PD1/AIN1)         |                   |
+| Spare   | AIN4     | 2 (PA4/AIN4)           | 13 (PD4/AIN4)         |                   |
+| MOSI    | PA4/MOSI | n/a                    | 37                    | 4 (SDI)           |
+| MISO    | PA5/MISO | n/a                    | 38                    | n/c               |
+| SCK     | PA6/SCK  | n/a                    | 39                    | 3 (SCK)           |
+| SS      | PA7/SS   | n/a                    | 40                    | 2 (/CS)           |
+| RxD     | RxD0     | 8 (PB3)                | 34 (PA1)              |                   |
+| TxD     | TxD0     | 9 (PB2)                | 33 (PA0)              |                   |
+| MIDI_IN | RxD2     | n/a                    | 24 (PF1)              |                   |
+| n/c     | TxD2     | n/a                    | 23 (PF0)              |                   |
+| TRIGGER | ?        | n/a                    | ?                     |                   |
+| GATE    | ?        | n/a                    | ?                     |                   |
+
+Power and ground pins not shown.
+
 ## AVR Toolchain
 
 The programs have been compiled, linked and tested using a Linux version
