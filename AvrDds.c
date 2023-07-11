@@ -308,8 +308,14 @@ static void initUARTs(void)
    USART0.CTRLA |= USART_RXCIE_bm;   // Enable UART0 Rx interrupt
    USART0.CTRLB = USART_RXEN_bm | USART_TXEN_bm | USART_RXMODE_NORMAL_gc;
    
+#ifdef __AVR_ATtiny1616__
    // Enable UART0 TxD pin, PB2 (pin 9 on SOIC-20)
    PORTB.DIRSET = PIN2_bm;
+#endif
+#ifdef __AVR_ATmega4809__
+   // Enable UART0 TxD pin, PA0 (pin 33 on DIP-40)
+   PORTA.DIRSET = PIN0_bm;
+#endif
 
    stdout = &USART_stream;    // Allow use of 'printf' and similar functions
 }
