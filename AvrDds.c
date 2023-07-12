@@ -54,6 +54,11 @@ struct UART_BUFFER U0Buf;
 uint8_t SavedRSTFR = 0;
 volatile uint32_t Milliseconds = 0UL;
 volatile uint8_t Tick = 0;
+volatile uint8_t SpiState = 0u;
+volatile uint8_t DacB0;
+volatile uint8_t DacB1;
+volatile uint8_t DacB2;
+volatile uint8_t DacB3;
 volatile uint16_t PhaseAcc = 0u;
 volatile uint16_t PhaseInc = 512u;
 volatile uint8_t Wave[256];
@@ -123,6 +128,20 @@ ISR(TCB1_INT_vect)
    
 #ifdef DAC0
    DAC0.DATA = Wave[PhaseAcc >> 8u];
+#else
+   uint16_t dacCmd;
+   
+   dacCmd = 0x3000 | (Wave[PhaseAcc >> 8u] << 4);
+   DacB0 = dacCmd >> 8;
+   DacB1 = dacCmd & 0xff;
+   
+   dacCmd = 0xb000 | (0x345);
+   DacB2 = dacCmd >> 8;
+   DacB3 = dacCmd & 0xff;
+   
+   SpiState = 1u;
+   PORTA.OUTCLR = PIN7_bm; // MCP4822 /CS LOW
+   SPI0.DATA = DacB0;
 #endif
    
    // Square wave on PC0 for scope sync
@@ -132,6 +151,43 @@ ISR(TCB1_INT_vect)
       PORTC.OUTCLR = SYNC;
    
    PORTC.OUTCLR = DDSTIME;        // PC2 LOW
+}
+
+
+/* SPI0_INT_vect --- ISR for SPI transaction complete */
+
+ISR(SPI0_INT_vect)
+{
+   volatile uint8_t junk __attribute__((unused));
+   
+   switch (SpiState) {
+   case 1:
+      junk = SPI0.INTFLAGS;
+      junk = SPI0.DATA;
+      SPI0.DATA = DacB1;
+      SpiState++;
+      break;
+   case 2:
+      PORTA.OUTSET = PIN7_bm; // MCP4822 /CS HIGH
+      junk = SPI0.INTFLAGS;
+      junk = SPI0.DATA;
+      PORTA.OUTCLR = PIN7_bm; // MCP4822 /CS LOW
+      SPI0.DATA = DacB2;
+      SpiState++;
+      break;
+   case 3:
+      junk = SPI0.INTFLAGS;
+      junk = SPI0.DATA;
+      SPI0.DATA = DacB3;
+      SpiState++;
+      break;
+   case 4:
+      PORTA.OUTSET = PIN7_bm; // MCP4822 /CS HIGH
+      junk = SPI0.INTFLAGS;
+      junk = SPI0.DATA;
+      SpiState = 0u;
+      break;
+   }
 }
 
 
@@ -360,6 +416,21 @@ static void initDAC(void)
 }
 
 
+/* initSPI --- set up the SPI interface */
+
+void initSPI(void)
+{
+   SPI0.CTRLA = SPI_MASTER_bm; // | SPI_PRESC1_bm;
+   SPI0.CTRLB = SPI_SSD_bm | SPI_MODE1_bm | SPI_MODE0_bm;
+   SPI0.INTCTRL = SPI_IE_bm;
+   SPI0.CTRLA |= SPI_ENABLE_bm;  // Enable SPI
+   
+   PORTA.DIRSET = PIN4_bm;    // Make sure PA4/MOSI (pin 37 on DIP-40) is an output
+   PORTA.DIRSET = PIN6_bm;    // Make sure PA6/SCK (pin 39 on DIP-40) is an output
+   PORTA.DIRSET = PIN7_bm;    // Make sure PA7/SS (pin 40 on DIP-40) is an output
+}
+
+
 /* initADC --- set up the 10-bit analog-to-digital converter */
 
 static void initADC(void)
@@ -375,7 +446,7 @@ static void initADC(void)
    ADC0.CTRLA |= ADC_ENABLE_bm;  // Enable ADC
    
    PORTA.DIRCLR = PIN1_bm;    // Make sure PA1/AIN1 (pin 17 on SOIC-20) is an input
-   PORTA.DIRCLR = PIN4_bm;    // Make sure PA4/AIN4 (pin 2 on SOIC-20) is an input
+   //PORTA.DIRCLR = PIN4_bm;    // Make sure PA4/AIN4 (pin 2 on SOIC-20) is an input
 }
 
 
@@ -397,7 +468,12 @@ int main(void)
    initUARTs();
    initMillisecondTimer();
    initSampleTimer();
+#ifdef __AVR_ATtiny1616__
    initDAC();
+#endif
+#ifdef __AVR_ATmega4809__
+   initSPI();
+#endif
    initADC();
    
    sei();   // Enable interrupts
