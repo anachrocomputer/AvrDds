@@ -420,7 +420,8 @@ static void initDAC(void)
 
 void initSPI(void)
 {
-   SPI0.CTRLA = SPI_MASTER_bm; // | SPI_PRESC1_bm;
+   SPI0.CTRLA = SPI_MASTER_bm; // SPI prescaler divide-by 4 gives 5MHz
+   
    SPI0.CTRLB = SPI_SSD_bm | SPI_MODE1_bm | SPI_MODE0_bm;
    SPI0.INTCTRL = SPI_IE_bm;
    SPI0.CTRLA |= SPI_ENABLE_bm;  // Enable SPI
@@ -445,8 +446,14 @@ static void initADC(void)
    ADC0.MUXPOS = 0;
    ADC0.CTRLA |= ADC_ENABLE_bm;  // Enable ADC
    
+#ifdef __AVR_ATtiny1616__
    PORTA.DIRCLR = PIN1_bm;    // Make sure PA1/AIN1 (pin 17 on SOIC-20) is an input
-   //PORTA.DIRCLR = PIN4_bm;    // Make sure PA4/AIN4 (pin 2 on SOIC-20) is an input
+   PORTA.DIRCLR = PIN4_bm;    // Make sure PA4/AIN4 (pin 2 on SOIC-20) is an input
+#endif
+#ifdef __AVR_ATmega4809__
+   PORTD.DIRCLR = PIN1_bm;    // Make sure PD1/AIN1 (pin 10 on DIP-40) is an input
+   PORTD.DIRCLR = PIN4_bm;    // Make sure PD4/AIN4 (pin 13 on DIP-40) is an input
+#endif
 }
 
 
